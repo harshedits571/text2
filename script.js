@@ -138,16 +138,31 @@ async function detectAndApplyCurrency() {
     }
     // ----------------------------------
 
-    try {
-        const response = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) });
-        if (!response.ok) throw new Error('API error');
-        const data = await response.json();
-        const isIndia = data.country_code === 'IN';
-        window.pricingRegion = isIndia ? PRICING.IN : PRICING.US;
-    } catch (err) {
-        // On failure default to USD — international users should see USD
-        window.pricingRegion = PRICING.US;
+    // Helper: try a single geo API, returns country code string or null
+    async function tryGeoAPI(url, extractor) {
+        try {
+            const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return extractor(data) || null;
+        } catch (e) {
+            return null;
+        }
     }
+
+    // Try 3 different geo APIs in order — stops as soon as one works
+    let countryCode =
+        await tryGeoAPI('https://ipapi.co/json/', d => d.country_code) ||
+        await tryGeoAPI('https://ip-api.com/json/?fields=countryCode', d => d.countryCode) ||
+        await tryGeoAPI('https://ipwho.is/', d => d.country_code);
+
+    if (countryCode) {
+        window.pricingRegion = (countryCode === 'IN') ? PRICING.IN : PRICING.US;
+    } else {
+        // All APIs failed — default to INR (site is India-primary)
+        window.pricingRegion = PRICING.IN;
+    }
+
     applyPricingToPage(window.pricingRegion);
 }
 
