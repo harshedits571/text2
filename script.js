@@ -142,20 +142,23 @@ async function detectAndApplyCurrency() {
     // Helper: try a single geo API, returns country code string or null
     async function tryGeoAPI(url, extractor) {
         try {
-            const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+            const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
             if (!res.ok) return null;
             const data = await res.json();
-            return extractor(data) || null;
+            const code = extractor(data);
+            return (typeof code === 'string' && code.length === 2) ? code.toUpperCase() : null;
         } catch (e) {
             return null;
         }
     }
 
-    // Try 3 different geo APIs in order — stops as soon as one works
+    // Try 4 HTTPS-compatible geo APIs in order — stops as soon as one works
+    // NOTE: ip-api.com was removed — it does NOT support HTTPS on the free tier
     let countryCode =
         await tryGeoAPI('https://ipapi.co/json/', d => d.country_code) ||
-        await tryGeoAPI('https://ip-api.com/json/?fields=countryCode', d => d.countryCode) ||
-        await tryGeoAPI('https://ipwho.is/', d => d.country_code);
+        await tryGeoAPI('https://freeipapi.com/api/json', d => d.countryCode) ||
+        await tryGeoAPI('https://api.country.is/', d => d.country) ||
+        await tryGeoAPI('https://ipinfo.io/json', d => d.country);
 
     if (countryCode) {
         window.pricingRegion = (countryCode === 'IN') ? PRICING.IN : PRICING.US;
