@@ -21,8 +21,9 @@ const PRICING = {
     }
 };
 
-// Detected region config — defaults to US until API call completes
-window.pricingRegion = PRICING.US;
+// Detected region config — defaults to IN until API call completes
+// (site is India-primary; non-Indian users switch to USD once geo-API responds)
+window.pricingRegion = PRICING.IN;
 
 function applyPricingToPage(region) {
     const p = region;
