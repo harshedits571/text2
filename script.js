@@ -79,6 +79,14 @@ function applyPricingToPage(region) {
         btn.textContent = `Get Basic Script — ${p.basic.label}`;
     });
 
+    // --- Hero section CTA (has an inner <span>, needs separate targeting) ---
+    const heroCTAText = document.getElementById('hero-pro-cta-text');
+    if (heroCTAText) heroCTAText.textContent = `Get Pro — ${p.pro.label}`;
+
+    // --- Hero free subtitle inline price ---
+    const heroBasicInline = document.getElementById('hero-basic-price-inline');
+    if (heroBasicInline) heroBasicInline.textContent = p.basic.label;
+
     // Inline text notes
     document.querySelectorAll('.price-note').forEach(note => {
         if (note.querySelector('a')) return; // skip notes with links
